@@ -70,7 +70,8 @@ fn main() {
     // flts[0] = 1.0;
 
     // let mut outflts = [0.0;10000];
-    let mut outflts: Vec<f32> = vec![0.0; 10000];
+    // let mut outflts: Vec<Vec<f32>> = vec![vec![0.0; 10000], vec![0.0,10000]];
+    let mut outflts: Vec<f32> = vec![0.0; 1000];
 
     let volstring = CString::new("Volume").unwrap();
 
@@ -147,7 +148,9 @@ fn main() {
           // let chan = vec![&outflts];
           // let frames = vec![vec!&outflts, &outflts];
           // let frames = vec![&outflts,&outflts];
-          let frames = vec![outflts,outflts];
+          // let frames = vec![outflts,outflts];
+          // let r = outflts.clone();
+          let frames = vec![outflts.clone(), outflts.clone()];
           out.write_stream_f32(min_frame_count, &frames).unwrap();
 
        }
