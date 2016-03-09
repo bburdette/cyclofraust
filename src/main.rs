@@ -66,10 +66,11 @@ fn main() {
     unsafe { fraust_init(SAMPLE_RATE as i32); }
 
     let bufmax = 10000;
-    let mut flts = [0.0;10000];
-    flts[0] = 1.0;
+    let mut inflts = [0.0;10000];
+    // flts[0] = 1.0;
 
-    let mut outflts = [0.0;10000];
+    // let mut outflts = [0.0;10000];
+    let mut outflts: Vec<f32> = vec![0.0; 10000];
 
     let volstring = CString::new("Volume").unwrap();
 
@@ -141,11 +142,12 @@ fn main() {
           // do dsp!
 
           // compute samples. 
-          unsafe { fraust_compute(min_frame_count as i32, flts.as_mut_ptr(), outflts.as_mut_ptr()); }
+          unsafe { fraust_compute(min_frame_count as i32, inflts.as_mut_ptr(), outflts.as_mut_slice().as_mut_ptr()); }
 
-          let chan = vec![&outflts];
+          // let chan = vec![&outflts];
           // let frames = vec![vec!&outflts, &outflts];
-          let frames = vec![chan,chan];
+          // let frames = vec![&outflts,&outflts];
+          let frames = vec![outflts,outflts];
           out.write_stream_f32(min_frame_count, &frames).unwrap();
 
        }
@@ -190,7 +192,7 @@ fn main() {
 
     println!("its over!");
 
-    Ok(())
+    // Ok(())
 }
     /*
     thread::sleep(Duration::new(3, 0));
