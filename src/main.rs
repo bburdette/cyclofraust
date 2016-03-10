@@ -71,7 +71,7 @@ fn main() {
 
     // let mut outflts = [0.0;10000];
     // let mut outflts: Vec<Vec<f32>> = vec![vec![0.0; 10000], vec![0.0,10000]];
-    let mut outflts: Vec<f32> = vec![0.0; 1000];
+    let mut outflts: Vec<f32> = vec![0.0; 100000];
 
     let volstring = CString::new("Volume").unwrap();
 
@@ -103,7 +103,7 @@ fn main() {
 
     // create output stream
     let mut out = dev.create_outstream().unwrap();
-    assert!(out.set_name("sine").is_ok());
+    assert!(out.set_name("noise").is_ok());
     out.set_format(rsoundio::SioFormat::Float32LE).unwrap();
     println!("Output format: {}", out.format().unwrap());
 
@@ -142,8 +142,13 @@ fn main() {
         {
           // do dsp!
 
-          // compute samples. 
-          unsafe { fraust_compute(min_frame_count as i32, inflts.as_mut_ptr(), outflts.as_mut_slice().as_mut_ptr()); }
+          // compute samples.
+
+          let comp_count = min(max_frame_count, outflts.len() as u32);
+ 
+          unsafe { fraust_compute(comp_count as i32, inflts.as_mut_ptr(), outflts.as_mut_slice().as_mut_ptr()); }
+
+          // println!("meh: {}, {}, {}", outflts[0], min_frame_count, max_frame_count);
 
           // let chan = vec![&outflts];
           // let frames = vec![vec!&outflts, &outflts];
@@ -151,6 +156,8 @@ fn main() {
           // let frames = vec![outflts,outflts];
           // let r = outflts.clone();
           let frames = vec![outflts.clone(), outflts.clone()];
+
+
           out.write_stream_f32(min_frame_count, &frames).unwrap();
 
        }
