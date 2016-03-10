@@ -71,7 +71,8 @@ fn main() {
 
     // let mut outflts = [0.0;10000];
     // let mut outflts: Vec<Vec<f32>> = vec![vec![0.0; 10000], vec![0.0,10000]];
-    let mut outflts: Vec<f32> = vec![0.0; 100000];
+    let mut outflts: Vec<f32> = vec![0.0; 1000000];
+    let mut frames = vec![outflts.clone(), outflts.clone()];
 
     let volstring = CString::new("Volume").unwrap();
 
@@ -115,6 +116,7 @@ fn main() {
     out.register_write_callback(|out: rsoundio::OutStream,
                                  min_frame_count: u32,
                                  max_frame_count: u32| {
+        /*
         // any events to update the DSP with?? 
         match rx.try_recv() { 
           Ok(ke) => {
@@ -132,35 +134,35 @@ fn main() {
           }
           _ => {}
         }
+        */
 
-        // do we have enough buf? 
-        if min_frame_count > bufmax
+        // do dsp!
+
+        // compute samples.
+
+        let comp_count = min(max_frame_count, outflts.len() as u32);
+
+        unsafe { fraust_compute(comp_count as i32, inflts.as_mut_ptr(), frames[0].as_mut_slice().as_mut_ptr()); }
+
+        // println!("meh: {}, {}, {}", outflts[0], min_frame_count, max_frame_count);
+
+        // let chan = vec![&outflts];
+        // let frames = vec![vec!&outflts, &outflts];
+        // let frames = vec![&outflts,&outflts];
+        // let frames = vec![outflts,outflts];
+        // let r = outflts.clone();
+        // let frames = vec![outflts.clone(), outflts.clone()];
+
+        // frames[1].clone_from_slice(frames[0].as_slice());
+        // frames[1].clone_from(&frames[0]);
         {
-          println!("not enough of the buf!");
+          let (l,r) = frames.split_at_mut(1);
+          r[0].clone_from(&l[0]);
         }
-        else
-        {
-          // do dsp!
-
-          // compute samples.
-
-          let comp_count = min(max_frame_count, outflts.len() as u32);
- 
-          unsafe { fraust_compute(comp_count as i32, inflts.as_mut_ptr(), outflts.as_mut_slice().as_mut_ptr()); }
-
-          // println!("meh: {}, {}, {}", outflts[0], min_frame_count, max_frame_count);
-
-          // let chan = vec![&outflts];
-          // let frames = vec![vec!&outflts, &outflts];
-          // let frames = vec![&outflts,&outflts];
-          // let frames = vec![outflts,outflts];
-          // let r = outflts.clone();
-          let frames = vec![outflts.clone(), outflts.clone()];
 
 
-          out.write_stream_f32(min_frame_count, &frames).unwrap();
+        out.write_stream_f32(min_frame_count, &frames).unwrap();
 
-       }
 
         /*
         let l: Vec<f32> = samples.iter()
