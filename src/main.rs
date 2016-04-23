@@ -12,6 +12,10 @@ use std::thread;
 use std::str::FromStr;
 use std::cmp::min;
 
+// #[macro_use]
+// mod tryopt;
+// mod stringerror;
+
 extern crate tinyosc;
 use tinyosc as osc;
 
@@ -42,13 +46,19 @@ const SAMPLE_RATE: f64 = 44100.0;
 const FRAMES_PER_BUFFER: u32 = 2048;
 
 /*
+fn main() {
+    match run() {
+      Err(e) => println!("error {:?}", e),
+      _ => (),
+    }
     run().unwrap()
 }
 
 
-fn run() -> Result<(), pa::Error> {
+fn run() -> Result<(), Box<std::error::Error> >
 */
-fn main() {
+fn main() 
+{
     // ---------------------------------------------
     // start the osc receiver thread
     // ---------------------------------------------
@@ -61,7 +71,7 @@ fn main() {
     // ---------------------------------------------
     // init fraust 
     // ---------------------------------------------
-    println!("initting with sample rate: {}", SAMPLE_RATE);
+    println!("initting fraust with sample rate: {}", SAMPLE_RATE);
 
     unsafe { fraust_init(SAMPLE_RATE as i32); }
 
@@ -71,7 +81,8 @@ fn main() {
 
     // let mut outflts = [0.0;10000];
     // let mut outflts: Vec<Vec<f32>> = vec![vec![0.0; 10000], vec![0.0,10000]];
-    let mut outflts: Vec<f32> = vec![0.0; 1000000];
+    // let mut outflts: Vec<f32> = vec![0.0; 1000000];
+    let mut outflts: Vec<f32> = vec![0.0; 1000];
     let mut frames = vec![outflts.clone(), outflts.clone()];
 
     let volstring = CString::new("Volume").unwrap();
@@ -93,8 +104,23 @@ fn main() {
     // create an audio context
     let mut sio = rsoundio::SoundIo::new();
     sio.set_name("rsoundio-example").unwrap();
+
+    // print the backends.
+    let becount = sio.backend_count();
+
+    println!("backend count {}", becount);
+
+    for i in 0..becount {
+      let be = sio.backend(i);
+      println!("backend #{}: {:?} ", i, be);
+    }
+
+    // let be = try_opt_resbox!(sio.backend(2), "backend error");
+    let be = sio.backend(2).unwrap();
+    sio.connect_backend(be).unwrap();
+
     // connect to the default audio backend
-    sio.connect().unwrap();
+    // sio.connect().unwrap();
     println!("Connected to backend: {}", sio.current_backend().unwrap());
     sio.flush_events();
     // get default output device
@@ -106,6 +132,8 @@ fn main() {
     let mut out = dev.create_outstream().unwrap();
     assert!(out.set_name("noise").is_ok());
     out.set_format(rsoundio::SioFormat::Float32LE).unwrap();
+    // out.set_latency(0.006);
+    out.latency = 0.006;
     println!("Output format: {}", out.format().unwrap());
 
     // let mut outvec = vec!dd
@@ -116,7 +144,9 @@ fn main() {
     out.register_write_callback(|out: rsoundio::OutStream,
                                  min_frame_count: u32,
                                  max_frame_count: u32| {
-        /*
+        
+        // println!("latency: {:?}", out.latency());
+
         // any events to update the DSP with?? 
         match rx.try_recv() { 
           Ok(ke) => {
@@ -134,13 +164,14 @@ fn main() {
           }
           _ => {}
         }
-        */
 
         // do dsp!
 
         // compute samples.
 
         let comp_count = min(max_frame_count, outflts.len() as u32);
+
+        // println!("callback, min {}, max {}, comp_count {}", min_frame_count, max_frame_count, comp_count);
 
         unsafe { fraust_compute(comp_count as i32, inflts.as_mut_ptr(), frames[0].as_mut_slice().as_mut_ptr()); }
 
@@ -161,8 +192,10 @@ fn main() {
         }
 
 
-        out.write_stream_f32(min_frame_count, &frames).unwrap();
+        // out.write_stream_f32(min_frame_count, &frames).unwrap();
+        out.write_stream_f32(comp_count, &frames).unwrap();
 
+        // out.clear_buffer();
 
         /*
         let l: Vec<f32> = samples.iter()
@@ -187,7 +220,7 @@ fn main() {
     // open output stream
     out.open().unwrap();
     let sr = out.sample_rate();
-    println!("Sample rate: {}", sr);
+    println!("output sample rate: {}", sr);
 
     let layout = out.layout();
     println!("Output channel layout: {}", layout);
@@ -316,7 +349,7 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
         },
       };
 
-    // println!("message received {} {:?}", inmsg.path, inmsg.arguments );
+    println!("message received {} {:?}", inmsg.path, inmsg.arguments );
 
     match inmsg {
       osc::Message { path: "keyh", arguments: ref args } => {
