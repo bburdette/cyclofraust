@@ -5,7 +5,7 @@ authors = ["Ben B <bburdette@gmail.com>"]
 build = "build.rs"
 
 [dependencies]
-rsoundio = "0.1.2"
+rsoundio = "0.1.5"
 libc = "0.2.0"
 tinyosc = "0.0.2"
 

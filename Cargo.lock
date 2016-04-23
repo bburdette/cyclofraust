@@ -4,7 +4,7 @@ version = "0.1.0"
 dependencies = [
  "gcc 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "rsoundio 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rsoundio 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "tinyosc 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -43,7 +43,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "rsoundio"
-version = "0.1.2"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "pkg-config 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
