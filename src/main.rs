@@ -41,7 +41,8 @@ pub struct KeyEvt {
 
 const CHANNELS: i32 = 2;
 const NUM_SECONDS: i32 = 5;
-const SAMPLE_RATE: f64 = 44100.0;
+const SAMPLE_RATE: f64 = 48000.0;
+// const SAMPLE_RATE: f64 = 44100.0;
 // const FRAMES_PER_BUFFER: u32 = 64;
 const FRAMES_PER_BUFFER: u32 = 2048;
 
@@ -82,7 +83,7 @@ fn main()
     // let mut outflts = [0.0;10000];
     // let mut outflts: Vec<Vec<f32>> = vec![vec![0.0; 10000], vec![0.0,10000]];
     // let mut outflts: Vec<f32> = vec![0.0; 1000000];
-    let mut outflts: Vec<f32> = vec![0.0; 1000];
+    let mut outflts: Vec<f32> = vec![0.0; 10000];
     let mut frames = vec![outflts.clone(), outflts.clone()];
 
     let volstring = CString::new("Volume").unwrap();
@@ -116,7 +117,7 @@ fn main()
     }
 
     // let be = try_opt_resbox!(sio.backend(2), "backend error");
-    let be = sio.backend(2).unwrap();
+    let be = sio.backend(1).unwrap();
     sio.connect_backend(be).unwrap();
 
     // connect to the default audio backend
@@ -132,8 +133,7 @@ fn main()
     let mut out = dev.create_outstream().unwrap();
     assert!(out.set_name("noise").is_ok());
     out.set_format(rsoundio::SioFormat::Float32LE).unwrap();
-    // out.set_latency(0.006);
-    out.latency = 0.006;
+    out.set_latency(0.006);
     println!("Output format: {}", out.format().unwrap());
 
     // let mut outvec = vec!dd
@@ -349,7 +349,7 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
         },
       };
 
-    println!("message received {} {:?}", inmsg.path, inmsg.arguments );
+    // println!("message received {} {:?}", inmsg.path, inmsg.arguments );
 
     match inmsg {
       osc::Message { path: "keyh", arguments: ref args } => {
