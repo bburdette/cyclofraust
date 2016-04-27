@@ -1,5 +1,4 @@
 extern crate libc;
-extern crate rsoundio;
 
 use std::ffi::CString;
 use std::net::UdpSocket;
@@ -12,9 +11,9 @@ use std::thread;
 use std::str::FromStr;
 use std::cmp::min;
 
-// #[macro_use]
-// mod tryopt;
-// mod stringerror;
+extern crate portaudio;
+
+use portaudio as pa;
 
 extern crate tinyosc;
 use tinyosc as osc;
@@ -41,25 +40,18 @@ pub struct KeyEvt {
 
 const CHANNELS: i32 = 2;
 const NUM_SECONDS: i32 = 5;
-const SAMPLE_RATE: f64 = 48000.0;
-// const SAMPLE_RATE: f64 = 44100.0;
-// const FRAMES_PER_BUFFER: u32 = 64;
-const FRAMES_PER_BUFFER: u32 = 2048;
+const SAMPLE_RATE: f64 = 44100.0;
+const FRAMES_PER_BUFFER: u32 = 64;
+// const FRAMES_PER_BUFFER: u32 = 2048;
 
-/*
 fn main() {
-    match run() {
-      Err(e) => println!("error {:?}", e),
-      _ => (),
-    }
     run().unwrap()
 }
 
 
-fn run() -> Result<(), Box<std::error::Error> >
-*/
-fn main() 
-{
+fn run() -> Result<(), pa::Error> {
+
+
     // ---------------------------------------------
     // start the osc receiver thread
     // ---------------------------------------------
@@ -72,19 +64,15 @@ fn main()
     // ---------------------------------------------
     // init fraust 
     // ---------------------------------------------
-    println!("initting fraust with sample rate: {}", SAMPLE_RATE);
+    println!("initting with sample rate: {}", SAMPLE_RATE);
 
     unsafe { fraust_init(SAMPLE_RATE as i32); }
 
     let bufmax = 10000;
-    let mut inflts = [0.0;10000];
-    // flts[0] = 1.0;
+    let mut flts = [0.0;10000];
+    flts[0] = 1.0;
 
-    // let mut outflts = [0.0;10000];
-    // let mut outflts: Vec<Vec<f32>> = vec![vec![0.0; 10000], vec![0.0,10000]];
-    // let mut outflts: Vec<f32> = vec![0.0; 1000000];
-    let mut outflts: Vec<f32> = vec![0.0; 10000];
-    let mut frames = vec![outflts.clone(), outflts.clone()];
+    let mut outflts = [0.0;10000];
 
     let volstring = CString::new("Volume").unwrap();
 
@@ -99,163 +87,16 @@ fn main()
     // unsafe { fraust_compute(bufmax, flts.as_mut_ptr(), outflts.as_mut_ptr()); }
 
     // ---------------------------------------------
-    // start the rsoundio process!
+    // start the portaudio process!
     // ---------------------------------------------
 
-    // create an audio context
-    let mut sio = rsoundio::SoundIo::new();
-    sio.set_name("rsoundio-example").unwrap();
-
-    // print the backends.
-    let becount = sio.backend_count();
-
-    println!("backend count {}", becount);
-
-    for i in 0..becount {
-      let be = sio.backend(i);
-      println!("backend #{}: {:?} ", i, be);
-    }
-
-    // let be = try_opt_resbox!(sio.backend(2), "backend error");
-    let be = sio.backend(1).unwrap();
-    sio.connect_backend(be).unwrap();
-
-    // connect to the default audio backend
-    // sio.connect().unwrap();
-    println!("Connected to backend: {}", sio.current_backend().unwrap());
-    sio.flush_events();
-    // get default output device
-    let dev = sio.default_output_device().unwrap();
-    assert!(dev.probe_error().is_none());
-    println!("Using output device: {}", dev);
-
-    // create output stream
-    let mut out = dev.create_outstream().unwrap();
-    assert!(out.set_name("noise").is_ok());
-    out.set_format(rsoundio::SioFormat::Float32LE).unwrap();
-    out.set_latency(0.006);
-    println!("Output format: {}", out.format().unwrap());
-
-    // let mut outvec = vec!dd
-
-    // ----------------------------------
-    // register callbacks
-    // ----------------------------------
-    out.register_write_callback(|out: rsoundio::OutStream,
-                                 min_frame_count: u32,
-                                 max_frame_count: u32| {
-        
-        // println!("latency: {:?}", out.latency());
-
-        // any events to update the DSP with?? 
-        match rx.try_recv() { 
-          Ok(ke) => {
-            match ke.evttype { 
-              KeType::KeyHit => { 
-                  // println!("setting vol to 0.3!");
-                  unsafe { fraust_setval(volstring.as_ptr(), 0.3); }
-                }
-              KeType::KeyUnpress => { 
-                  // println!("setting vol to 0.001!");
-                  unsafe { fraust_setval(volstring.as_ptr(), 0.001); }
-                }
-              _ => {}
-            }
-          }
-          _ => {}
-        }
-
-        // do dsp!
-
-        // compute samples.
-
-        let comp_count = min(max_frame_count, outflts.len() as u32);
-
-        // println!("callback, min {}, max {}, comp_count {}", min_frame_count, max_frame_count, comp_count);
-
-        unsafe { fraust_compute(comp_count as i32, inflts.as_mut_ptr(), frames[0].as_mut_slice().as_mut_ptr()); }
-
-        // println!("meh: {}, {}, {}", outflts[0], min_frame_count, max_frame_count);
-
-        // let chan = vec![&outflts];
-        // let frames = vec![vec!&outflts, &outflts];
-        // let frames = vec![&outflts,&outflts];
-        // let frames = vec![outflts,outflts];
-        // let r = outflts.clone();
-        // let frames = vec![outflts.clone(), outflts.clone()];
-
-        // frames[1].clone_from_slice(frames[0].as_slice());
-        // frames[1].clone_from(&frames[0]);
-        {
-          let (l,r) = frames.split_at_mut(1);
-          r[0].clone_from(&l[0]);
-        }
-
-
-        // out.write_stream_f32(min_frame_count, &frames).unwrap();
-        out.write_stream_f32(comp_count, &frames).unwrap();
-
-        // out.clear_buffer();
-
-        /*
-        let l: Vec<f32> = samples.iter()
-                                 .cycle()
-                                 .take(max_frame_count as usize + pos)
-                                 .skip(pos)
-                                 .map(|s| *s)
-                                 .collect();
-        pos = (max_frame_count as usize + pos) % cycle_len;
-        let r = l.clone();
-        let frames = vec![l, r];
-        out.write_stream_f32(min_frame_count, &frames).unwrap();
-        */
-    });
-    out.register_underflow_callback(|out: rsoundio::OutStream| {
-        println!("Underflow in {} occured!", out.name().unwrap())
-    });
-    out.register_error_callback(|out: rsoundio::OutStream, err: rsoundio::SioError| {
-        println!("{} error: {}", out.name().unwrap(), err)
-    });
-
-    // open output stream
-    out.open().unwrap();
-    let sr = out.sample_rate();
-    println!("output sample rate: {}", sr);
-
-    let layout = out.layout();
-    println!("Output channel layout: {}", layout);
-    // start audio output (now the `write_callback` will be called periodically)
-    out.start().unwrap();
-
-    let oscrecvip = std::net::SocketAddr::from_str("0.0.0.0:8000").expect("Invalid IP");
-    // since sound is in a separate thread, 
-    // use this thread to do the osc receiver stuff.
-    match oscthread(oscrecvip, tx) {
-      Ok(s) => println!("oscthread exited ok"),
-      Err(e) => println!("oscthread error: {} ", e),
-    };
-
-    println!("its over!");
-
-    // Ok(())
-}
-    /*
-    thread::sleep(Duration::new(3, 0));
-    println!("Pause for 1s");
-    out.pause();
-    thread::sleep(Duration::new(1, 0));
-    println!("Unpausing");
-    out.unpause();
-    thread::sleep(Duration::new(3, 0));
-    out.destroy()
-    */
-
-    /*
     let pa = try!(pa::PortAudio::new());
 
+/*
     let mut settings = try!(pa.default_output_stream_settings(CHANNELS, SAMPLE_RATE, FRAMES_PER_BUFFER));
     // we won't output out of range samples so don't bother clipping them.
     settings.flags = pa::stream_flags::CLIP_OFF;
+*/
 
     let id = pa::DeviceIndex(0);
     let params = pa::StreamParameters::<f32>::new(id, 2, true, 0.0);
@@ -263,9 +104,8 @@ fn main()
     settings.flags = pa::stream_flags::CLIP_OFF;
 
     printPaDev(id, &pa);
-*/
 
-  /*
+
     // This routine will be called by the PortAudio engine when audio is needed. It may called at
     // interrupt level on some machines so don't do anything that could mess up the system like
     // dynamic resource allocation or IO.
@@ -323,7 +163,6 @@ fn main()
       Ok(s) => println!("oscthread exited ok"),
       Err(e) => println!("oscthread error: {} ", e),
     };
-      */
 
     /*
     loop {
@@ -332,6 +171,13 @@ fn main()
     }
     */
 
+    try!(stream.stop());
+    try!(stream.close());
+
+    println!("its over!");
+
+    Ok(())
+}
 
 
 fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<String, Error> { 
@@ -402,4 +248,49 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
   // Ok(String::from("meh"))
 }
 
+const INTERLEAVED: bool = true;
+const LATENCY: pa::Time = 0.0; // Ignored by PortAudio::is_*_format_supported.
+const STANDARD_SAMPLE_RATES: [f64; 13] = [
+    8000.0, 9600.0, 11025.0, 12000.0, 16000.0, 22050.0, 24000.0, 32000.0,
+    44100.0, 48000.0, 88200.0, 96000.0, 192000.0,
+];
+
+fn printPaDev(idx: pa::DeviceIndex, pado: &pa::PortAudio) -> Result<(), pa::Error> {
+  let info = try!(pado.device_info(idx));
+  println!("--------------------------------------- {:?}", idx);
+  println!("{:#?}", &info);
+
+  let in_channels = info.max_input_channels;
+  let input_params = 
+    pa::StreamParameters::<i16>::new(idx, in_channels, INTERLEAVED, LATENCY);
+  let out_channels = info.max_output_channels;
+  let output_params = 
+    pa::StreamParameters::<i16>::new(idx, out_channels, INTERLEAVED, LATENCY);
+
+  println!("Supported standard sample rates for half-duplex 16-bit {} channel input:", 
+    in_channels);
+  for &sample_rate in &STANDARD_SAMPLE_RATES {
+    if pado.is_input_format_supported(input_params, sample_rate).is_ok() {
+        println!("\t{}hz", sample_rate);
+    }
+  }
+
+  println!("Supported standard sample rates for half-duplex 16-bit {} channel output:", 
+    out_channels);
+  for &sample_rate in &STANDARD_SAMPLE_RATES {
+    if pado.is_output_format_supported(output_params, sample_rate).is_ok() {
+        println!("\t{}hz", sample_rate);
+    }
+  }
+
+  println!("Supported standard sample rates for full-duplex 16-bit {} channel input, {} channel output:",
+     in_channels, out_channels);
+  for &sample_rate in &STANDARD_SAMPLE_RATES {
+    if pado.is_duplex_format_supported(input_params, output_params, sample_rate).is_ok() {
+        println!("\t{}hz", sample_rate);
+    }
+  }
+
+  Ok(())
+}
 
