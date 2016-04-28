@@ -11,6 +11,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::str::FromStr;
 use std::cmp::min;
+use std::env;
 
 // #[macro_use]
 // mod tryopt;
@@ -39,12 +40,30 @@ pub struct KeyEvt {
 , position: f32
 }
 
-const CHANNELS: i32 = 2;
-const NUM_SECONDS: i32 = 5;
+// const CHANNELS: i32 = 2;
+// const NUM_SECONDS: i32 = 5;
 const SAMPLE_RATE: f64 = 48000.0;
 // const SAMPLE_RATE: f64 = 44100.0;
 // const FRAMES_PER_BUFFER: u32 = 64;
-const FRAMES_PER_BUFFER: u32 = 2048;
+// const FRAMES_PER_BUFFER: u32 = 2048;
+
+fn main() {
+  
+  let args = env::args();
+  let mut iter = args.skip(1); // skip the program name
+
+  let latency = 
+    match iter.next() {
+      Some(latency) => {
+        FromStr::from_str(&latency).unwrap()
+      }
+      None => {
+        0.006
+      }
+    };
+
+  run(latency);
+}
 
 /*
 fn main() {
@@ -58,12 +77,8 @@ fn main() {
 
 fn run() -> Result<(), Box<std::error::Error> >
 */
-fn main() 
+fn run(latency: f64) 
 {
-    // ---------------------------------------------
-    // start the osc receiver thread
-    // ---------------------------------------------
-
     // make a channel to receive updates from the osc.
     let (tx, rx) = mpsc::channel::<KeyEvt>();
 
@@ -78,11 +93,7 @@ fn main()
 
     let bufmax = 10000;
     let mut inflts = [0.0;10000];
-    // flts[0] = 1.0;
 
-    // let mut outflts = [0.0;10000];
-    // let mut outflts: Vec<Vec<f32>> = vec![vec![0.0; 10000], vec![0.0,10000]];
-    // let mut outflts: Vec<f32> = vec![0.0; 1000000];
     let mut outflts: Vec<f32> = vec![0.0; 10000];
     let mut frames = vec![outflts.clone(), outflts.clone()];
 
@@ -94,9 +105,6 @@ fn main()
     let mut buflen = 0;
     let bufmaxu = bufmax as usize;
     let mut bufidx = bufmaxu - 1;
-
-    // make a full buffer to begin with.
-    // unsafe { fraust_compute(bufmax, flts.as_mut_ptr(), outflts.as_mut_ptr()); }
 
     // ---------------------------------------------
     // start the rsoundio process!
@@ -133,10 +141,9 @@ fn main()
     let mut out = dev.create_outstream().unwrap();
     assert!(out.set_name("noise").is_ok());
     out.set_format(rsoundio::SioFormat::Float32LE).unwrap();
-    out.set_latency(0.006);
+    println!("setting latency: {:?}", latency);
+    out.set_latency(latency);
     println!("Output format: {}", out.format().unwrap());
-
-    // let mut outvec = vec!dd
 
     // ----------------------------------
     // register callbacks
@@ -239,100 +246,6 @@ fn main()
 
     // Ok(())
 }
-    /*
-    thread::sleep(Duration::new(3, 0));
-    println!("Pause for 1s");
-    out.pause();
-    thread::sleep(Duration::new(1, 0));
-    println!("Unpausing");
-    out.unpause();
-    thread::sleep(Duration::new(3, 0));
-    out.destroy()
-    */
-
-    /*
-    let pa = try!(pa::PortAudio::new());
-
-    let mut settings = try!(pa.default_output_stream_settings(CHANNELS, SAMPLE_RATE, FRAMES_PER_BUFFER));
-    // we won't output out of range samples so don't bother clipping them.
-    settings.flags = pa::stream_flags::CLIP_OFF;
-
-    let id = pa::DeviceIndex(0);
-    let params = pa::StreamParameters::<f32>::new(id, 2, true, 0.0);
-    let mut settings = pa::OutputStreamSettings::new(params, SAMPLE_RATE, FRAMES_PER_BUFFER);
-    settings.flags = pa::stream_flags::CLIP_OFF;
-
-    printPaDev(id, &pa);
-*/
-
-  /*
-    // This routine will be called by the PortAudio engine when audio is needed. It may called at
-    // interrupt level on some machines so don't do anything that could mess up the system like
-    // dynamic resource allocation or IO.
-    let callback = move |pa::OutputStreamCallbackArgs { buffer, frames, .. }| {
-        println!("in the callback!");
-        // any events to update the DSP with?? 
-        match rx.try_recv() { 
-          Ok(ke) => {
-            match ke.evttype { 
-              KeType::KeyHit => { 
-                  // println!("setting vol to 0.3!");
-                  unsafe { fraust_setval(volstring.as_ptr(), 0.3); }
-                }
-              KeType::KeyUnpress => { 
-                  // println!("setting vol to 0.001!");
-                  unsafe { fraust_setval(volstring.as_ptr(), 0.001); }
-                }
-              _ => {}
-            }
-          }
-          _ => {}
-        }
-
-        if frames * 2 > bufmax
-        {
-          pa::Abort
-        }
-        else
-        {
-          // do dsp!
-          let mut idx = 0;
-          let mut ofidx = 0;
-
-          // compute 'frames' number of samples.
-          unsafe { fraust_compute(frames as i32, flts.as_mut_ptr(), outflts.as_mut_ptr()); }
-
-          for _ in 0..frames {
-              buffer[idx] = outflts[ofidx];
-              idx += 1;
-              buffer[idx] = outflts[ofidx];
-              idx += 1;
-              ofidx += 1;
-          }
-          pa::Continue
-        }
-    };
-
-    let mut stream = try!(pa.open_non_blocking_stream(settings, callback));
-
-    try!(stream.start());
-
-    let oscrecvip = std::net::SocketAddr::from_str("0.0.0.0:8000").expect("Invalid IP");
-    // spawn the osc receiver thread. 
-    match oscthread(oscrecvip, tx) {
-      Ok(s) => println!("oscthread exited ok"),
-      Err(e) => println!("oscthread error: {} ", e),
-    };
-      */
-
-    /*
-    loop {
-      println!("Play for {} seconds.", NUM_SECONDS);
-      pa.sleep(NUM_SECONDS * 1_000);
-    }
-    */
-
-
 
 fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<String, Error> { 
   let socket = try!(UdpSocket::bind(oscrecvip));
