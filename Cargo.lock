@@ -4,7 +4,7 @@ version = "0.1.0"
 dependencies = [
  "gcc 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "rsoundio 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "portaudio 0.2.0 (git+https://github.com/mvdnes/portaudio-rs)",
  "tinyosc 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -16,6 +16,11 @@ dependencies = [
  "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "bitflags"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "byteorder"
@@ -42,10 +47,21 @@ version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "rsoundio"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+name = "portaudio"
+version = "0.2.0"
+source = "git+https://github.com/mvdnes/portaudio-rs#0b228f54a16814c52ba1ef449ac439af59f8cab0"
 dependencies = [
+ "bitflags 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "portaudio_sys 0.1.1 (git+https://github.com/mvdnes/portaudio-rs)",
+]
+
+[[package]]
+name = "portaudio_sys"
+version = "0.1.1"
+source = "git+https://github.com/mvdnes/portaudio-rs#0b228f54a16814c52ba1ef449ac439af59f8cab0"
+dependencies = [
+ "libc 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "pkg-config 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
