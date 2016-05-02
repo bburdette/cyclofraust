@@ -14,6 +14,8 @@ use std::cmp::min;
 extern crate portaudio;
 use portaudio::{stream, hostapi, device};
 
+// use portaudio::util::{duration};
+
 // #[macro_use]
 // mod tryopt;
 // mod stringerror;
@@ -146,6 +148,7 @@ fn run()
 
         // TO DO: verify input buflen too, in case it has fewer or no channels, thats a segfault.
 
+        // unsafe { fraust_compute(output.len() as i32, inflts.as_ptr(), output.as_mut_ptr()); }
         unsafe { fraust_compute(output.len() as i32, input.as_ptr(), output.as_mut_ptr()); }
 
         stream::StreamCallbackResult::Continue
@@ -179,10 +182,14 @@ fn run()
         None => return,
         Some(d) => d.default_low_output_latency,
     };
+
+    // println!("out_latency: {:?}", duration_to_pa_time(out_lat));
+    // println!("out_latency: {:?}", out_lat.nun_milliseconds());
+
+
     let outparams = stream::StreamParameters { device: out_idx, channel_count: 2, suggested_latency: out_lat, data: 0f32 };
 
-
-    let mut stream = match stream::Stream::open(None, 
+    let mut stream = match stream::Stream::open(None,
                                                 Some(outparams), 
                                                 44100f64, 
                                                 stream::FRAMES_PER_BUFFER_UNSPECIFIED, 
