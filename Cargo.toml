@@ -5,7 +5,7 @@ authors = ["Ben B <bburdette@gmail.com>"]
 build = "build.rs"
 
 [dependencies]
-portaudio = { git = "https://github.com/mvdnes/portaudio-rs" }
+cpal = "0.2.9"
 libc = "0.2.0"
 tinyosc = "0.0.2"
 
