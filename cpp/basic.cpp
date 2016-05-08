@@ -33,6 +33,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <iostream>
+#include <algorithm>
+
+using namespace std;
 
 // 'null' implementation of Meta; nothing is recorded!
 struct Meta
@@ -328,7 +331,7 @@ class dsp {
 //  FAUST generated signal processor
 //----------------------------------------------------------------------------
 		
-#include "noise.cpp"
+#include "fosc24.cpp"
 
 /* The class factory, used to create and destroy mydsp objects in the
    client. Implemented using C linkage to facilitate dlopen access. */
