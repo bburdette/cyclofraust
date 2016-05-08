@@ -37,9 +37,9 @@ enum KeType {
   KeyHit
 } 
 
-pub struct KeyEvt { 
+pub struct KeyEvt<'a> { 
   evttype: KeType
-, keyindex: i32
+, parameter: &'a CString 
 , position: f32
 }
 
@@ -86,6 +86,33 @@ fn print_devs()
 
 fn run() 
 {
+    let volstrings: Vec<CString> = vec![ 
+      CString::new("meh0").unwrap(),
+      CString::new("meh1").unwrap(),
+      CString::new("meh2").unwrap(),
+      CString::new("meh3").unwrap(),
+      CString::new("meh4").unwrap(),
+      CString::new("meh5").unwrap(),
+      CString::new("meh6").unwrap(),
+      CString::new("meh7").unwrap(),
+      CString::new("meh8").unwrap(),
+      CString::new("meh9").unwrap(),
+      CString::new("meh10").unwrap(),
+      CString::new("meh11").unwrap(),
+      CString::new("meh12").unwrap(),
+      CString::new("meh13").unwrap(),
+      CString::new("meh14").unwrap(),
+      CString::new("meh15").unwrap(),
+      CString::new("meh16").unwrap(),
+      CString::new("meh17").unwrap(),
+      CString::new("meh18").unwrap(),
+      CString::new("meh19").unwrap(),
+      CString::new("meh20").unwrap(),
+      CString::new("meh21").unwrap(),
+      CString::new("meh22").unwrap(),
+      CString::new("meh23").unwrap(),
+    ];
+
     // ---------------------------------------------
     // make a channel to receive updates from the osc.
     // ---------------------------------------------
@@ -112,6 +139,7 @@ fn run()
     let mut frames = vec![outflts.clone(), outflts.clone()];
 
     let volstring = CString::new("Volume").unwrap();
+    let oscstring = CString::new("meh").unwrap();
 
     unsafe { fraust_setval(volstring.as_ptr(), 0.05); }
 
@@ -133,16 +161,13 @@ fn run()
           Ok(ke) => {
             match ke.evttype { 
               KeType::KeyMove => { 
-                  // println!("setting vol to 0.3!");
-                  unsafe { fraust_setval(volstring.as_ptr(), ke.position); }
+                  unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
                 }
               KeType::KeyHit => { 
-                  // println!("setting vol to 0.3!");
-                  // unsafe { fraust_setval(volstring.as_ptr(), 0.3); }
+                  unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
                 }
               KeType::KeyUnpress => { 
-                  // println!("setting vol to 0.001!");
-                  unsafe { fraust_setval(volstring.as_ptr(), 0.0); }
+                  unsafe { fraust_setval(ke.parameter.as_ptr(), 0.0); }
                 }
               _ => {}
             }
@@ -223,7 +248,7 @@ fn run()
     let oscrecvip = std::net::SocketAddr::from_str("0.0.0.0:8000").expect("Invalid IP");
     // since sound is in a separate thread, 
     // use this thread to do the osc receiver stuff.
-    match oscthread(oscrecvip, tx) {
+    match oscthread(oscrecvip, tx, &volstrings) {
       Ok(s) => println!("oscthread exited ok"),
       Err(e) => println!("oscthread error: {} ", e),
     };
@@ -235,7 +260,7 @@ fn run()
 
 
 
-fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<String, Error> { 
+fn oscthread<'a>(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt<'a>>, volstrings: &'a Vec<CString>) -> Result<String, Error> { 
   let socket = try!(UdpSocket::bind(oscrecvip));
   let mut buf = [0; 1000];
 
@@ -260,10 +285,13 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
         // b is nominally 0.0 to 1.0
         match (q,r) {
           (&osc::Argument::i(idx), &osc::Argument::f(amt)) => {
-              // build a keyevt to send over to the sound thread.
-              let ke = KeyEvt{ evttype: KeType::KeyMove, keyindex: idx, position: amt };
-              sender.send(ke)
-              //Ok(0)
+              if 0 <= idx && idx <= 23
+              {
+                // build a keyevt to send over to the sound thread.
+                let ke = KeyEvt{ evttype: KeType::KeyMove, parameter: &volstrings[idx as usize], position: amt };
+                sender.send(ke)
+              }
+              else { Ok(()) }
             },
           _ => { 
             // println!("ignore");
@@ -278,10 +306,13 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
         // b is nominally 0.0 to 1.0
         match (q,r) {
           (&osc::Argument::i(idx), &osc::Argument::f(amt)) => {
-              // build a keyevt to send over to the sound thread.
-              let ke = KeyEvt{ evttype: KeType::KeyHit, keyindex: idx, position: amt };
-              sender.send(ke)
-              //Ok(0)
+              if 0 <= idx && idx <= 23
+              {
+                // build a keyevt to send over to the sound thread.
+                let ke = KeyEvt{ evttype: KeType::KeyHit, parameter: &volstrings[idx as usize], position: amt };
+                sender.send(ke)
+              }
+              else { Ok(()) }
             },
           _ => { 
             // println!("ignore");
@@ -294,10 +325,13 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
         // key-end args lack an amount!  so we only match for the index.
         match q {
           &osc::Argument::i(idx) => {
-              // build a keyevt to send over to the sound thread.
-              let ke = KeyEvt{ evttype: KeType::KeyUnpress, keyindex: idx, position: 0.0 };
-              sender.send(ke)
-              //Ok(0)
+              if 0 <= idx && idx <= 23
+              {
+                // build a keyevt to send over to the sound thread.
+                let ke = KeyEvt{ evttype: KeType::KeyUnpress, parameter: &volstrings[idx as usize], position: 0.0 };
+                sender.send(ke)
+              }
+              else { Ok(()) }
             },
           _ => { 
             // println!("ignore");
