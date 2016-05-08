@@ -132,13 +132,17 @@ fn run()
         match rx.try_recv() { 
           Ok(ke) => {
             match ke.evttype { 
+              KeType::KeyMove => { 
+                  // println!("setting vol to 0.3!");
+                  unsafe { fraust_setval(volstring.as_ptr(), ke.position); }
+                }
               KeType::KeyHit => { 
                   // println!("setting vol to 0.3!");
-                  unsafe { fraust_setval(volstring.as_ptr(), 0.3); }
+                  // unsafe { fraust_setval(volstring.as_ptr(), 0.3); }
                 }
               KeType::KeyUnpress => { 
                   // println!("setting vol to 0.001!");
-                  unsafe { fraust_setval(volstring.as_ptr(), 0.001); }
+                  unsafe { fraust_setval(volstring.as_ptr(), 0.0); }
                 }
               _ => {}
             }
@@ -249,6 +253,24 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
     // println!("message received {} {:?}", inmsg.path, inmsg.arguments );
 
     match inmsg {
+      osc::Message { path: "keyc", arguments: ref args } => {
+        let q = &args[0];
+        let r = &args[1];
+        // coming from the cyclophone, a is the key index and 
+        // b is nominally 0.0 to 1.0
+        match (q,r) {
+          (&osc::Argument::i(idx), &osc::Argument::f(amt)) => {
+              // build a keyevt to send over to the sound thread.
+              let ke = KeyEvt{ evttype: KeType::KeyMove, keyindex: idx, position: amt };
+              sender.send(ke)
+              //Ok(0)
+            },
+          _ => { 
+            // println!("ignore");
+            Ok(())
+          },
+        }
+      }
       osc::Message { path: "keyh", arguments: ref args } => {
         let q = &args[0];
         let r = &args[1];
@@ -269,13 +291,11 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
       }
       osc::Message { path: "keye", arguments: ref args } => {
         let q = &args[0];
-        let r = &args[1];
-        // coming from the cyclophone, a is the key index and 
-        // b is nominally 0.0 to 1.0
-        match (q,r) {
-          (&osc::Argument::i(idx), &osc::Argument::f(amt)) => {
+        // key-end args lack an amount!  so we only match for the index.
+        match q {
+          &osc::Argument::i(idx) => {
               // build a keyevt to send over to the sound thread.
-              let ke = KeyEvt{ evttype: KeType::KeyUnpress, keyindex: idx, position: amt };
+              let ke = KeyEvt{ evttype: KeType::KeyUnpress, keyindex: idx, position: 0.0 };
               sender.send(ke)
               //Ok(0)
             },
@@ -285,10 +305,6 @@ fn oscthread(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt>) -> Result<Stri
           },
         }
       }
-      /*
-      osc::Message { path: "keyc", arguments: ref args } => {
-      },
-      */
       _ => { // println!("ignore");
            Ok(()) } ,
       };
