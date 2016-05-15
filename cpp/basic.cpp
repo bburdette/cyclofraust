@@ -331,7 +331,8 @@ class dsp {
 //  FAUST generated signal processor
 //----------------------------------------------------------------------------
 		
-#include "fosc24.cpp"
+// #include "fosc24.cpp"
+#include "modalBar.cpp"
 
 /* The class factory, used to create and destroy mydsp objects in the
    client. Implemented using C linkage to facilitate dlopen access. */
@@ -351,7 +352,7 @@ extern "C" {
   }
 
   void fraust_compute(int len, float* inputs, float* outputs)
-  {
+  { 
     if (mydsp_INSTANCE)
       mydsp_INSTANCE->compute(len, &inputs, &outputs);   
   }

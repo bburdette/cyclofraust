@@ -87,7 +87,7 @@ fn print_devs()
 fn run() 
 {
     let volstrings: Vec<CString> = vec![ 
-      CString::new("meh0").unwrap(),
+      CString::new("gate").unwrap(),
       CString::new("meh1").unwrap(),
       CString::new("meh2").unwrap(),
       CString::new("meh3").unwrap(),
@@ -161,10 +161,11 @@ fn run()
           Ok(ke) => {
             match ke.evttype { 
               KeType::KeyMove => { 
-                  unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
+                  // unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
                 }
               KeType::KeyHit => { 
-                  unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
+                  unsafe { fraust_setval(ke.parameter.as_ptr(), 1.0); }
+                  // unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
                 }
               KeType::KeyUnpress => { 
                   unsafe { fraust_setval(ke.parameter.as_ptr(), 0.0); }
@@ -177,8 +178,9 @@ fn run()
 
         // TO DO: verify input buflen too, in case it has fewer or no channels, thats a segfault.
 
-        // unsafe { fraust_compute(output.len() as i32, inflts.as_ptr(), output.as_mut_ptr()); }
-        unsafe { fraust_compute(output.len() as i32, input.as_ptr(), output.as_mut_ptr()); }
+        unsafe { fraust_compute(output.len() as i32, inflts.as_ptr(), output.as_mut_ptr()); }
+        // don't compute using input array when there isn't one...
+        // unsafe { fraust_compute(output.len() as i32, input.as_ptr(), output.as_mut_ptr()); }
 
         stream::StreamCallbackResult::Continue
     });
