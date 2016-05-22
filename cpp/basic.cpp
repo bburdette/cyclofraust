@@ -34,6 +34,9 @@
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
+#include <list>
+#include <string>
+
 
 using namespace std;
 
@@ -112,7 +115,7 @@ enum ui_elem_type_t {
 
 struct ui_elem_t {
   ui_elem_type_t type;
-  char *label;
+  string label;
   float *zone;
   void *ref;
   float init, min, max, step;
@@ -122,8 +125,7 @@ struct ui_elem_t {
 class BasicUI : public UI
 {
 public:
-  int nelems;
-  ui_elem_t *elems;
+  list<ui_elem_t> elemList;
 		
   BasicUI();
   virtual ~BasicUI();
@@ -135,6 +137,26 @@ protected:
 		float init, float min, float max, float step);
   void add_elem(ui_elem_type_t type, char *label, float *zone,
 		float min, float max);
+
+  list<string> labelList;
+
+  std::string buildFullLabel(const char *label)
+  {
+    string lSReturn;
+    int i = 0; 
+    for (list<string>::iterator lIter = labelList.begin(); lIter != labelList.end(); ++lIter)
+    {
+      // std::cout << "bfl loop " << i++ << endl;
+      lSReturn += *lIter;
+      lSReturn += "/";
+    }
+
+    // std::cout << "bfl labeladd " << i << endl;
+    lSReturn += label;
+
+    // std::cout << "bfl return '" << lSReturn << "'" << endl;
+    return lSReturn;
+  }
 
 public:
   // --------------------------------------------------------------------
@@ -164,104 +186,81 @@ public:
 
 BasicUI::BasicUI()
 {
-  nelems = 0;
-  elems = NULL;
 }
 
 BasicUI::~BasicUI()
 {
-  if (elems) free(elems);
 }
 
 inline void BasicUI::add_elem(ui_elem_type_t type, char *label)
 {
-  // don't add null labels.
-  if (!label)
-      return;
-  std::cout << "add_elem(ui_elem_type_t type, char *label) " << label << std::endl;
-  ui_elem_t *elems1 = (ui_elem_t*)realloc(elems, (nelems+1)*sizeof(ui_elem_t));
-  if (elems1)
-    elems = elems1;
-  else
-    return;
-  elems[nelems].type = type;
-  elems[nelems].label = label;
-  elems[nelems].zone = NULL;
-  elems[nelems].ref = NULL;
-  elems[nelems].init = 0.0;
-  elems[nelems].min = 0.0;
-  elems[nelems].max = 0.0;
-  elems[nelems].step = 0.0;
-  nelems++;
+  // zone, init, min, max, and step == 0.0
+  add_elem(type, label, NULL, 0.0, 0.0, 0.0, 0.0);
 }
 
 inline void BasicUI::add_elem(ui_elem_type_t type, char *label, float *zone)
 {
-  // don't add null labels.
-  if (!label)
-      return;
-  std::cout << "add_elem(ui_elem_type_t type, char *label) " << label << std::endl;
-  ui_elem_t *elems1 = (ui_elem_t*)realloc(elems, (nelems+1)*sizeof(ui_elem_t));
-  if (elems1)
-    elems = elems1;
-  else
-    return;
-  elems[nelems].type = type;
-  elems[nelems].label = label;
-  elems[nelems].zone = zone;
-  elems[nelems].ref = NULL;
-  elems[nelems].init = 0.0;
-  elems[nelems].min = 0.0;
-  elems[nelems].max = 0.0;
-  elems[nelems].step = 0.0;
-  nelems++;
-}
-
-inline void BasicUI::add_elem(ui_elem_type_t type, char *label, float *zone,
-			  float init, float min, float max, float step)
-{
-  // don't add null labels.
-  if (!label)
-      return;
-  std::cout << "add_elem(ui_elem_type_t type, char *label) " << label << std::endl;
-  ui_elem_t *elems1 = (ui_elem_t*)realloc(elems, (nelems+1)*sizeof(ui_elem_t));
-  if (elems1)
-    elems = elems1;
-  else
-    return;
-  elems[nelems].type = type;
-  elems[nelems].label = label;
-  elems[nelems].zone = zone;
-  elems[nelems].ref = NULL;
-  elems[nelems].init = init;
-  elems[nelems].min = min;
-  elems[nelems].max = max;
-  elems[nelems].step = step;
-  nelems++;
+  // init, min, max, and step == 0.0
+  add_elem(type, label, zone, 0.0, 0.0, 0.0, 0.0);
 }
 
 inline void BasicUI::add_elem(ui_elem_type_t type, char *label, float *zone,
 			  float min, float max)
 {
-  // don't add null labels.
-  if (!label)
-      return;
-  std::cout << "add_elem(ui_elem_type_t type, char *label) " << label << std::endl;
-  ui_elem_t *elems1 = (ui_elem_t*)realloc(elems, (nelems+1)*sizeof(ui_elem_t));
-  if (elems1)
-    elems = elems1;
-  else
-    return;
-  elems[nelems].type = type;
-  elems[nelems].label = label;
-  elems[nelems].zone = zone;
-  elems[nelems].ref = NULL;
-  elems[nelems].init = 0.0;
-  elems[nelems].min = min;
-  elems[nelems].max = max;
-  elems[nelems].step = 0.0;
-  nelems++;
+  // init and step == 0.0
+  add_elem(type, label, zone, 0.0, min, max, 0.0);
 }
+
+inline void BasicUI::add_elem(ui_elem_type_t type, char *label, float *zone,
+			  float init, float min, float max, float step)
+{
+  // std::cout << "add_elem1, type: " << type << endl;
+  // null labels are just blanks.
+  string lSLabel("");
+  if (label)
+    lSLabel = label;
+
+  // std::cout << "add_elem2" << endl;
+  // adjust the label stack?
+  switch (type) 
+  {
+  case UI_BUTTON:
+  case UI_CHECK_BUTTON:
+  case UI_V_SLIDER: 
+  case UI_H_SLIDER: 
+  case UI_NUM_ENTRY:
+  case UI_V_BARGRAPH: 
+  case UI_H_BARGRAPH:
+      break;
+  case UI_V_GROUP: 
+  case UI_H_GROUP: 
+  case UI_T_GROUP:
+      // std::cout << "add_elem3" << endl;
+      labelList.push_back(lSLabel);
+      break;
+  case UI_END_GROUP:
+      // std::cout << "add_elem4" << endl;
+      labelList.pop_back();
+      break;
+  }
+
+  ui_elem_t lElem;
+  lElem.type = type;
+  lElem.label = buildFullLabel(lSLabel.c_str());
+  lElem.zone = zone;
+  lElem.ref = NULL;
+  lElem.init = init;
+  lElem.min = min;
+  lElem.max = max;
+  lElem.step = step;
+
+  std::cout << "add_elem " << lElem.label << " type: " << type << endl; 
+
+  elemList.push_back(lElem);
+
+  // std::cout << "add end" << endl;
+}
+
 
 void BasicUI::addButton(char* label, float* zone)
 { add_elem(UI_BUTTON, label, zone); }
@@ -292,11 +291,14 @@ void BasicUI::run() {}
 
 ui_elem_t* BasicUI::findElement(const char* label)
 {
-  for (unsigned int i=0; i< nelems; ++i)
+  // std::cout << "findElement" << label << endl;
+
+  for (list<ui_elem_t>::iterator lIter = elemList.begin(); 
+      lIter != elemList.end();
+      ++lIter)
   {
-    // std::cout << "label: " << label << " elems[i].label: " << elems[i].label << std::endl;
-    if (strcmp(label,elems[i].label) == 0)
-      return &elems[i];
+    if (lIter->label == label)
+      return &*lIter;
   }
 
   return 0;
@@ -304,7 +306,7 @@ ui_elem_t* BasicUI::findElement(const char* label)
 
 /******************************************************************************
 
-			    FAUST DSP
+			    FAUST DSP support
 
 *******************************************************************************/
 
@@ -334,13 +336,9 @@ class dsp {
 // #include "fosc24.cpp"
 #include "modalBar.cpp"
 
-/* The class factory, used to create and destroy mydsp objects in the
-   client. Implemented using C linkage to facilitate dlopen access. */
-
 static dsp *mydsp_INSTANCE = 0;
 static BasicUI *myui_INSTANCE = 0;
 
-//static void fraust_init(int samplerate) 
 extern "C" {
   void fraust_init(int32_t samplerate) 
   {
@@ -362,13 +360,12 @@ extern "C" {
     if (!myui_INSTANCE)
       return 0;
 
-    // std::cout << label << " val:" << val << " nelems: " << myui_INSTANCE->nelems << std::endl;
     ui_elem_t *elt = myui_INSTANCE->findElement(label);
 
     if (!elt)
       return 0;
 
-
+    // std::cout << "setval " << label << " val:" << val std::endl;
     *(elt->zone) = val;
 
     return 1;
@@ -391,4 +388,3 @@ extern "C" {
 
 }
 
-// #endif

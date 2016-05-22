@@ -87,7 +87,7 @@ fn print_devs()
 fn run() 
 {
     let volstrings: Vec<CString> = vec![ 
-      CString::new("gate").unwrap(),
+      CString::new("0x00/Basic_Parameters/gate").unwrap(),
       CString::new("meh1").unwrap(),
       CString::new("meh2").unwrap(),
       CString::new("meh3").unwrap(),
@@ -277,7 +277,7 @@ fn oscthread<'a>(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt<'a>>, volstr
         },
       };
 
-    // println!("message received {} {:?}", inmsg.path, inmsg.arguments );
+    println!("message received {} {:?}", inmsg.path, inmsg.arguments );
 
     match inmsg {
       osc::Message { path: "keyc", arguments: ref args } => {
