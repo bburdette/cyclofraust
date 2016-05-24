@@ -89,30 +89,30 @@ fn run()
     let volstrings: Vec<CString> = vec![ 
       // CString::new("Modbar0/Basic_Parameters/gate").unwrap(),
       // CString::new("0x00/Modbar0/Basic_Parameters/gate").unwrap(),
-      CString::new("0x00/meh0").unwrap(),
-      CString::new("0x00/meh1").unwrap(),
-      CString::new("0x00/meh2").unwrap(),
-      CString::new("0x00/meh3").unwrap(),
-      CString::new("0x00/meh4").unwrap(),
-      CString::new("0x00/meh5").unwrap(),
-      CString::new("0x00/meh6").unwrap(),
-      CString::new("0x00/meh7").unwrap(),
-      CString::new("0x00/meh8").unwrap(),
-      CString::new("0x00/meh9").unwrap(),
-      CString::new("0x00/meh10").unwrap(),
-      CString::new("0x00/meh11").unwrap(),
-      CString::new("0x00/meh12").unwrap(),
-      CString::new("0x00/meh13").unwrap(),
-      CString::new("0x00/meh14").unwrap(),
-      CString::new("0x00/meh15").unwrap(),
-      CString::new("0x00/meh16").unwrap(),
-      CString::new("0x00/meh17").unwrap(),
-      CString::new("0x00/meh18").unwrap(),
-      CString::new("0x00/meh19").unwrap(),
-      CString::new("0x00/meh20").unwrap(),
-      CString::new("0x00/meh21").unwrap(),
-      CString::new("0x00/meh22").unwrap(),
-      CString::new("0x00/meh23").unwrap(),
+      CString::new("0x00/grp0/amp").unwrap(),
+      CString::new("0x00/grp1/amp").unwrap(),
+      CString::new("0x00/grp2/amp").unwrap(),
+      CString::new("0x00/grp3/amp").unwrap(),
+      CString::new("0x00/grp4/amp").unwrap(),
+      CString::new("0x00/grp5/amp").unwrap(),
+      CString::new("0x00/grp6/amp").unwrap(),
+      CString::new("0x00/grp7/amp").unwrap(),
+      CString::new("0x00/grp8/amp").unwrap(),
+      CString::new("0x00/grp9/amp").unwrap(),
+      CString::new("0x00/grp10/amp").unwrap(),
+      CString::new("0x00/grp11/amp").unwrap(),
+      CString::new("0x00/grp12/amp").unwrap(),
+      CString::new("0x00/grp13/amp").unwrap(),
+      CString::new("0x00/grp14/amp").unwrap(),
+      CString::new("0x00/grp15/amp").unwrap(),
+      CString::new("0x00/grp16/amp").unwrap(),
+      CString::new("0x00/grp17/amp").unwrap(),
+      CString::new("0x00/grp18/amp").unwrap(),
+      CString::new("0x00/grp19/amp").unwrap(),
+      CString::new("0x00/grp20/amp").unwrap(),
+      CString::new("0x00/grp21/amp").unwrap(),
+      CString::new("0x00/grp22/amp").unwrap(),
+      CString::new("0x00/grp23/amp").unwrap(),
     ];
 
     // ---------------------------------------------
@@ -143,7 +143,13 @@ fn run()
     let volstring = CString::new("Volume").unwrap();
     let oscstring = CString::new("meh").unwrap();
 
-    unsafe { fraust_setval(volstring.as_ptr(), 0.05); }
+
+    for i in 0 .. 24
+    {
+      let adjstring = format!("0x00/grp{}/freq", i);
+      let freqstring = CString::new(adjstring).unwrap();
+      unsafe { fraust_setval(freqstring.as_ptr(), i as f32 * 0.05); }
+    }
 
     let mut loopcount = 0;
     let mut buflen = 0;
@@ -163,11 +169,11 @@ fn run()
           Ok(ke) => {
             match ke.evttype { 
               KeType::KeyMove => { 
-                  // unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
+                  unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
                 }
               KeType::KeyHit => { 
-                  unsafe { fraust_setval(ke.parameter.as_ptr(), 1.0); }
-                  // unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
+                  // unsafe { fraust_setval(ke.parameter.as_ptr(), 1.0); }
+                  unsafe { fraust_setval(ke.parameter.as_ptr(), ke.position); }
                 }
               KeType::KeyUnpress => { 
                   unsafe { fraust_setval(ke.parameter.as_ptr(), 0.0); }

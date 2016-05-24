@@ -235,13 +235,14 @@ inline void BasicUI::add_elem(ui_elem_type_t type, char *label, float *zone,
   case UI_V_GROUP: 
   case UI_H_GROUP: 
   case UI_T_GROUP:
-      // std::cout << "add_elem3" << endl;
+      // std::cout << "adding group: " << lSLabel.c_str() << endl;
       labelList.push_back(lSLabel);
-      break;
+      // don't actually add these to the elemList, only the labelList.
+      return;
   case UI_END_GROUP:
-      // std::cout << "add_elem4" << endl;
+      // std::cout << "removing group." << endl;
       labelList.pop_back();
-      break;
+      return;
   }
 
   ui_elem_t lElem;
@@ -336,7 +337,8 @@ class dsp {
 // #include "fosc24.cpp"
 // #include "modalBar.cpp"
 // #include "mmb.cpp"
-#include "foscsum.cpp"
+// #include "foscsum.cpp"
+#include "oscmodsum.cpp"
 
 static dsp *mydsp_INSTANCE = 0;
 static BasicUI *myui_INSTANCE = 0;
@@ -365,9 +367,12 @@ extern "C" {
     ui_elem_t *elt = myui_INSTANCE->findElement(label);
 
     if (!elt)
+    {
+      std::cout << "faust parameter not found: " << label << std::endl;
       return 0;
+    }
 
-    std::cout << "setting " << label << " to val:" << val << std::endl;
+    std::cout << "setting faust parameter '" << label << "' to val:" << val << std::endl;
     *(elt->zone) = val;
 
     return 1;
