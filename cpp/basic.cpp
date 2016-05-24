@@ -334,7 +334,9 @@ class dsp {
 //----------------------------------------------------------------------------
 		
 // #include "fosc24.cpp"
-#include "modalBar.cpp"
+// #include "modalBar.cpp"
+// #include "mmb.cpp"
+#include "foscsum.cpp"
 
 static dsp *mydsp_INSTANCE = 0;
 static BasicUI *myui_INSTANCE = 0;
@@ -365,7 +367,7 @@ extern "C" {
     if (!elt)
       return 0;
 
-    // std::cout << "setval " << label << " val:" << val std::endl;
+    std::cout << "setting " << label << " to val:" << val << std::endl;
     *(elt->zone) = val;
 
     return 1;
