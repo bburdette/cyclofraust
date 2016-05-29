@@ -339,6 +339,8 @@ class dsp {
 // #include "mmb.cpp"
 // #include "foscsum.cpp"
 #include "oscmodsum.cpp"
+// #include "multiBlowBottle.cpp"
+// #include "multiModbar.cpp"
 
 static dsp *mydsp_INSTANCE = 0;
 static BasicUI *myui_INSTANCE = 0;

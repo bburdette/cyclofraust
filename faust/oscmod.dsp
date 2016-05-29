@@ -10,5 +10,9 @@ declare copyright 	"(c)GRAME 2009";
 
 import("music.lib");
 
-process = osc(hslider("freq",0.0,0.5,1.0,1) * 1000) * hslider("amp", 0.0,0.0,1.0,1);
+f = hslider("freq",0.0,0.5,1.0,1) * 1000;
+a = hslider("amp", 0.0,0.0,1.0,1);
+
+process = osc(f) * a, osc(f+100) * a;
+// process = osc(hslider("freq",0.0,0.5,1.0,1) * 1000) * hslider("amp", 0.0,0.0,1.0,1);
 

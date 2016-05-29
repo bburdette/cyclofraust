@@ -10,5 +10,9 @@ declare copyright 	"(c)GRAME 2009";
 
 oscmod = component("oscmod.dsp");
 
-process = sum(i,24, vgroup("grp%i", oscmod));
+meh(x,y) = x,y;
+
+process = par(i,24, vgroup("grp%i", oscmod)) :> meh; 
+// process = sum(i,24, vgroup("grp%i", oscmod));
+// process = vgroup("grp1", oscmod) vgroup("grp2", oscmod);
 

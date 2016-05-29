@@ -10,6 +10,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::str::FromStr;
 use std::cmp::min;
+use std::ops;
 
 extern crate portaudio;
 use portaudio::{stream, hostapi, device};
@@ -86,34 +87,16 @@ fn print_devs()
 
 fn run() 
 {
-    let volstrings: Vec<CString> = vec![ 
-      // CString::new("Modbar0/Basic_Parameters/gate").unwrap(),
-      // CString::new("0x00/Modbar0/Basic_Parameters/gate").unwrap(),
-      CString::new("0x00/grp0/amp").unwrap(),
-      CString::new("0x00/grp1/amp").unwrap(),
-      CString::new("0x00/grp2/amp").unwrap(),
-      CString::new("0x00/grp3/amp").unwrap(),
-      CString::new("0x00/grp4/amp").unwrap(),
-      CString::new("0x00/grp5/amp").unwrap(),
-      CString::new("0x00/grp6/amp").unwrap(),
-      CString::new("0x00/grp7/amp").unwrap(),
-      CString::new("0x00/grp8/amp").unwrap(),
-      CString::new("0x00/grp9/amp").unwrap(),
-      CString::new("0x00/grp10/amp").unwrap(),
-      CString::new("0x00/grp11/amp").unwrap(),
-      CString::new("0x00/grp12/amp").unwrap(),
-      CString::new("0x00/grp13/amp").unwrap(),
-      CString::new("0x00/grp14/amp").unwrap(),
-      CString::new("0x00/grp15/amp").unwrap(),
-      CString::new("0x00/grp16/amp").unwrap(),
-      CString::new("0x00/grp17/amp").unwrap(),
-      CString::new("0x00/grp18/amp").unwrap(),
-      CString::new("0x00/grp19/amp").unwrap(),
-      CString::new("0x00/grp20/amp").unwrap(),
-      CString::new("0x00/grp21/amp").unwrap(),
-      CString::new("0x00/grp22/amp").unwrap(),
-      CString::new("0x00/grp23/amp").unwrap(),
-    ];
+    let ampstring = "amp";
+    // let ampstring = "Basic_Parameters/gate";
+
+    let volstrings = (0..24).map(|i| { 
+      let adjstring = format!("0x00/grp{}/{}", i, ampstring);
+      CString::new(adjstring).unwrap()}).collect::<Vec<CString>>();
+               
+
+    // println!("idxs {:?}", idxs);
+    println!("vsz {:?}", volstrings);
 
     // ---------------------------------------------
     // make a channel to receive updates from the osc.
@@ -144,10 +127,14 @@ fn run()
     let oscstring = CString::new("meh").unwrap();
 
 
+    let freqstring = "freq";
+    // let freqstring = "Basic_Parameters/freq";
+
     for i in 0 .. 24
     {
-      let adjstring = format!("0x00/grp{}/freq", i);
+      let adjstring = format!("0x00/grp{}/{}", i, freqstring);
       let freqstring = CString::new(adjstring).unwrap();
+      // unsafe { fraust_setval(freqstring.as_ptr(), i as f32 * 100.0 + 200.0); }
       unsafe { fraust_setval(freqstring.as_ptr(), i as f32 * 0.05); }
     }
 
@@ -264,8 +251,6 @@ fn run()
     };
 
     println!("its over!");
-
-    // Ok(())
 }
 
 
