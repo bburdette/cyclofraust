@@ -10,9 +10,13 @@ declare copyright 	"(c)GRAME 2009";
 
 import("music.lib");
 
-f = hslider("freq",0.0,0.5,1.0,1) * 1000;
-a = hslider("amp", 0.0,0.0,1.0,1);
+smooth(c) = *(1-c) : +~*(c);
+gain    = vslider("[1]", 0, -70, +4, 0.1) : db2linear : smooth(0.999);
 
-process = osc(f) * a, osc(f+100) * a;
-// process = osc(hslider("freq",0.0,0.5,1.0,1) * 1000) * hslider("amp", 0.0,0.0,1.0,1);
+
+f = hslider("freq",0.0,0.5,1.0,1) * 1000 : smooth(0.999);
+a = hslider("amp", 0.0,0.0,1.0,1) : smooth(0.99);
+
+// process = osc(f) * a;
+process = osc(f + 150) * a, osc(f) * a;
 
