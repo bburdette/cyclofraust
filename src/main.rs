@@ -339,9 +339,6 @@ fn oscthread<'a>(oscrecvip: SocketAddr, sender: mpsc::Sender<KeyEvt<'a>>, volstr
       };
   };
 
-
-  // drop(socket); // close the socket
-  // Ok(String::from("meh"))
 }
 
 
