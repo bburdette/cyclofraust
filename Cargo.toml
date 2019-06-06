@@ -1,5 +1,5 @@
 [package]
-name = "fraust_test"
+name = "cyclofraust"
 version = "0.1.0"
 authors = ["Ben B <bburdette@gmail.com>"]
 build = "build.rs"

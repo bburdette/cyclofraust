@@ -12,18 +12,23 @@ use std::str::FromStr;
 use std::cmp::min;
 
 extern crate portaudio;
-
 use portaudio as pa;
 
 extern crate tinyosc;
 use tinyosc as osc;
 
+mod noise;
+mod minimal;
+
+use noise::{mydsp};
+
+/*
 extern {
   pub fn fraust_init(samplerate: i32);
   pub fn fraust_compute(count: i32, input: *mut libc::c_float, output: *mut libc::c_float );
   pub fn fraust_setval(label: *const libc::c_char , val: libc::c_float); 
 }
-
+*/
 
 enum KeType { 
   KeyPress,
@@ -66,7 +71,10 @@ fn run() -> Result<(), pa::Error> {
     // ---------------------------------------------
     println!("initting with sample rate: {}", SAMPLE_RATE);
 
-    unsafe { fraust_init(SAMPLE_RATE as i32); }
+    let mut dsp = Box::new(mydsp::new());
+    dsp.init(44100);
+
+    // unsafe { fraust_init(SAMPLE_RATE as i32); }
 
     let bufmax = 10000;
     let mut flts = [0.0;10000];
@@ -76,7 +84,7 @@ fn run() -> Result<(), pa::Error> {
 
     let volstring = CString::new("Volume").unwrap();
 
-    unsafe { fraust_setval(volstring.as_ptr(), 0.05); }
+    // unsafe { fraust_setval(volstring.as_ptr(), 0.05); }
 
     let mut loopcount = 0;
     let mut buflen = 0;
@@ -112,6 +120,7 @@ fn run() -> Result<(), pa::Error> {
     let callback = move |pa::OutputStreamCallbackArgs { buffer, frames, .. }| {
         println!("in the callback!");
         // any events to update the DSP with?? 
+        /*
         match rx.try_recv() { 
           Ok(ke) => {
             match ke.evttype { 
@@ -127,7 +136,7 @@ fn run() -> Result<(), pa::Error> {
             }
           }
           _ => {}
-        }
+        } */
 
         if frames * 2 > bufmax
         {
@@ -140,15 +149,18 @@ fn run() -> Result<(), pa::Error> {
           let mut ofidx = 0;
 
           // compute 'frames' number of samples.
-          unsafe { fraust_compute(frames as i32, flts.as_mut_ptr(), outflts.as_mut_ptr()); }
-
+          // unsafe { fraust_compute(frames as i32, flts.as_mut_ptr(), outflts.as_mut_ptr()); }
+          // dsp.compute(frames as i32, flts.as_mut_ptr(), outflts.as_mut_ptr());
+          // dsp.compute(frames as i32, &[], &mut[buffer]);
+          dsp.compute(frames as i32, &[], &mut[&mut outflts]);
+          // copy the mono output of outflts into stereo buffer.
           for _ in 0..frames {
               buffer[idx] = outflts[ofidx];
               idx += 1;
               buffer[idx] = outflts[ofidx];
               idx += 1;
               ofidx += 1;
-          }
+          } 
           pa::Continue
         }
     };

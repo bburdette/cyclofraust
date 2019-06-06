@@ -1,1 +1,1 @@
-nix-shell -p libsoundio cmake
+nix-shell -p libsoundio cmake faust cargo
